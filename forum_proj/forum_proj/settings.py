@@ -72,7 +72,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/'  # optional, where users go after login
-LOGOUT_REDIRECT_URL = '/login/'  # optional, where users go after logout
+LOGIN_REDIRECT_URL = '/'      # go to dashboard after login
+LOGOUT_REDIRECT_URL = '/accounts/login/'  # go back to login after logout
+
 

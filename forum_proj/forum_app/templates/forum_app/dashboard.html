@@ -1,18 +1,38 @@
 <h2>Welcome, {{ request.user.username }}</h2>
 <a href="{% url 'create_issue' %}">Create Issue</a> |
-<a href="{% url 'logout' %}">Logout</a>
+<form method="post" action="{% url 'logout' %}">
+  {% csrf_token %}
+  <button type="submit">Logout</button>
+</form>
+
 
 <h3>Pending Issues</h3>
 {% for issue in pending %}
   <a href="{% url 'issue_detail' issue.id %}">{{ issue.title }}</a>
-  - {{ issue.owner.username if issue.owner else "Publisher deleted" }}<br>
-{% empty %}No pending issues{% endfor %}
+  -
+  {% if issue.owner %}
+    {{ issue.owner.username }}
+  {% else %}
+    Publisher deleted
+  {% endif %}
+  <br>
+{% empty %}
+  No pending issues
+{% endfor %}
 
 <h3>Closed Issues</h3>
 {% for issue in closed %}
   <a href="{% url 'issue_detail' issue.id %}">{{ issue.title }}</a>
-  - {{ issue.owner.username if issue.owner else "Publisher deleted" }}<br>
-{% empty %}No closed issues{% endfor %}
+  -
+  {% if issue.owner %}
+    {{ issue.owner.username }}
+  {% else %}
+    Publisher deleted
+  {% endif %}
+  <br>
+{% empty %}
+  No closed issues
+{% endfor %}
 
 <h3>My Issues</h3>
 {% for issue in my_issues %}
@@ -21,4 +41,6 @@
     <a href="{% url 'close_issue' issue.id %}">Close</a>
   {% endif %}
   <br>
-{% empty %}You have no issues{% endfor %}
+{% empty %}
+  You have no issues
+{% endfor %}

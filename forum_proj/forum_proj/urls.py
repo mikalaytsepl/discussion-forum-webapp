@@ -1,10 +1,13 @@
+# forum_proj/urls.py
 from django.contrib import admin
 from django.urls import path, include
-from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('forum_app.urls')),  # include app routes
-    path('login/', auth_views.LoginView.as_view(template_name='forum_app/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    
+    # your app's routes (dashboard, create issue, etc.)
+    path('', include('forum_app.urls')),
+    
+    # built-in Django authentication (login, logout, password reset, etc.)
+    path('accounts/', include('django.contrib.auth.urls')),
 ]
