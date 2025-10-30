@@ -5,6 +5,7 @@ from django.http import HttpResponseForbidden
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.views import LoginView
+from django.conf import settings
 
 @login_required
 def dashboard(request):
@@ -47,38 +48,18 @@ def close_issue(request, pk):
     issue.save()
     return redirect('dashboard')
 
-class CustomLoginView(LoginView):
-    """
-    Renders the standard AuthenticationForm as `form`
-    AND injects a blank signup form as `signup_form`.
-    """
-    template_name = 'registration/login.html'
-    
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx.setdefault('signup_form', UserCreationForm())
-        return ctx
-
 def signup(request):
     """
-    Handle POST from the signup form shown on the login page.
-    On success: create user, log them in, redirect to dashboard.
-    On errors: re-render the same login page with form errors visible.
+    Dedicated registration page.
+    Creates the user, logs them in, then sends them to LOGIN_REDIRECT_URL.
     """
-    if request.method != 'POST':
-        # For direct GET to /accounts/signup/, just bounce to login page
-        return redirect('login')
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            auth_login(request, user)
+            return redirect(getattr(settings, "LOGIN_REDIRECT_URL", "/"))
+    else:
+        form = UserCreationForm()
 
-    form = UserCreationForm(request.POST)
-    if form.is_valid():
-        user = form.save()
-        auth_login(request, user)
-        return redirect('dashboard')
-
-    # If invalid, re-render login page with both forms, showing signup errors
-    login_form = AuthenticationForm(request=request)
-    return render(
-        request,
-        'registration/login.html',
-        {'form': login_form, 'signup_form': form},
-    )
+    return render(request, "registration/signup.html", {"form": form})

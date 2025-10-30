@@ -1,7 +1,8 @@
 # forum_proj/urls.py
 from django.contrib import admin
 from django.urls import path, include
-from forum_app.views import CustomLoginView, signup 
+from django.contrib.auth.views import LoginView
+from forum_app.views import signup
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -9,10 +10,13 @@ urlpatterns = [
     # your app's routes (dashboard, create issue, etc.)
     path('', include('forum_app.urls')),
     
-    # Our custom login overrides the default before including auth urls
-    path('accounts/login/', CustomLoginView.as_view(), name='login'),
+    # Our custom pages (order matters: put these BEFORE the auth include)
+    path('accounts/login/', LoginView.as_view(
+        template_name='registration/login.html'
+    ), name='login'),
+
     path('accounts/signup/', signup, name='signup'),
 
-    # Keep the rest of Django auth (logout, password reset, etc.)
+    # Keep the rest (logout, password reset, etc.)
     path('accounts/', include('django.contrib.auth.urls')),
 ]
