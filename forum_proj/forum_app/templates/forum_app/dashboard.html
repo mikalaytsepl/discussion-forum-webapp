@@ -36,11 +36,18 @@
 
 <h3>My Issues</h3>
 {% for issue in my_issues %}
-  {{ issue.title }} ({{ issue.status }})
+  <a href="{% url 'issue_detail' issue.id %}">{{ issue.title }}</a>
+  ({{ issue.status }})
+  
   {% if issue.status == 'pending' %}
-    <a href="{% url 'close_issue' issue.id %}">Close</a>
+    {% if issue.owner == request.user %}
+      <a href="{% url 'close_issue' issue.id %}">Close</a>
+    {% else %}
+      <span style="color: gray;">Only the creator can close this issue</span>
+    {% endif %}
   {% endif %}
   <br>
 {% empty %}
   You have no issues
 {% endfor %}
+

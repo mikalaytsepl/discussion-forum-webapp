@@ -19,6 +19,13 @@
   </form>
 {% endif %}
 
+{% if issue.status == 'pending' and request.user.id == issue.owner_id %}
+  <form action="{% url 'close_issue' issue.id %}" method="post">
+    {% csrf_token %}
+    <button type="submit">Close this issue</button>
+  </form>
+{% endif %}
+
 <h3>Comments:</h3>
 {% for c in issue.comments.all %}
   <p>

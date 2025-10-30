@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from .models import Issue, Comment
 from django.http import HttpResponseForbidden
 
@@ -38,8 +39,9 @@ def issue_detail(request, pk):
 @login_required
 def close_issue(request, pk):
     issue = get_object_or_404(Issue, pk=pk)
-    if request.user != issue.owner:
+    if request.user.id != issue.owner_id:
         return HttpResponseForbidden("Only the issue owner can close it.")
     issue.status = 'closed'
     issue.save()
+    messages.success(request, f"Issue '{issue.title}' has been closed.")
     return redirect('dashboard')
