@@ -3,6 +3,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Issue, Comment
 from django.http import HttpResponseForbidden
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import login as auth_login
+from django.contrib.auth.views import LoginView
+from django.conf import settings
 
 @login_required
 def dashboard(request):
@@ -45,3 +49,19 @@ def close_issue(request, pk):
     issue.save()
     messages.success(request, f"Issue '{issue.title}' has been closed.")
     return redirect('dashboard')
+
+def signup(request):
+    """
+    Dedicated registration page.
+    Creates the user, logs them in, then sends them to LOGIN_REDIRECT_URL.
+    """
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            auth_login(request, user)
+            return redirect(getattr(settings, "LOGIN_REDIRECT_URL", "/"))
+    else:
+        form = UserCreationForm()
+
+    return render(request, "registration/signup.html", {"form": form})
