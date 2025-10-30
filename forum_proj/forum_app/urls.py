@@ -7,5 +7,4 @@ urlpatterns = [
     path('create/', views.create_issue, name='create_issue'),
     path('issue/<int:pk>/', views.issue_detail, name='issue_detail'),
     path('issue/<int:pk>/close/', views.close_issue, name='close_issue'),
-    path('register/', views.register, name='register'),
 ]
