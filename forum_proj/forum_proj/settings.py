@@ -72,7 +72,6 @@ USE_TZ = True
 STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_REDIRECT_URL = '/'      # go to dashboard after login
-LOGOUT_REDIRECT_URL = '/accounts/login/'  # go back to login after logout
-
-
+LOGIN_REDIRECT_URL = '/'                 # After login, go to dashboard
+LOGOUT_REDIRECT_URL = '/accounts/login/' # After logout, go back to login
+LOGIN_URL = '/accounts/login/'           # Redirect unauthenticated users here
