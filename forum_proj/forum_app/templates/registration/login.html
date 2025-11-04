@@ -1,3 +1,6 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'forum_app/styles.css' %}">
+
 <h2>Log in</h2>
 
 <form method="post" action="{% url 'login' %}">
@@ -6,13 +9,14 @@
   {% if next %}
     <input type="hidden" name="next" value="{{ next }}">
   {% endif %}
-  <button type="submit">Login</button>
+  
+  <button type="submit" class="btn-create">Login</button>
 </form>
 
 <hr style="margin:1.5rem 0;">
 
 <p>Don't have an account?</p>
-<a href="{% url 'signup' %}"
-   style="display:inline-block;padding:0.5rem 1rem;border:1px solid #444;border-radius:6px;text-decoration:none">
+
+<a href="{% url 'signup' %}" class="btn-logout">
   Register Now!
 </a>

@@ -1,13 +1,16 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'forum_app/styles.css' %}">
+
 <h2>Create an account</h2>
 
 <form method="post" action="{% url 'signup' %}">
   {% csrf_token %}
   {{ form.non_field_errors }}
   {{ form.as_p }}
-  <button type="submit">Sign up</button>
+  <button type="submit" class="btn-logout">Sign up</button>
 </form>
 
 <p style="margin-top:1rem">
   Already have an account?
-  <a href="{% url 'login' %}">Log in</a>
+  <a href="{% url 'login' %}" class="btn-create">Log in</a>
 </p>

@@ -1,8 +1,9 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'forum_app/styles.css' %}">
+
 <h2>{{ issue.title }}</h2>
-<a href="{% url 'dashboard' %}" 
-style="display:inline-block; padding:8px 12px; 
-background:#007bff; color:white;
-border-radius:4px; text-decoration:none;">Back to Dashboard</a>
+<a href="{% url 'dashboard' %}"
+class="btn-create">Back to Dashboard</a>
 <p>{{ issue.description }}</p>
 <p>Status: {{ issue.status }}</p>
 
@@ -26,7 +27,7 @@ border-radius:4px; text-decoration:none;">Back to Dashboard</a>
 {% if issue.status == 'pending' and request.user.id == issue.owner_id %}
   <form action="{% url 'close_issue' issue.id %}" method="post">
     {% csrf_token %}
-    <button type="submit">Close this issue</button>
+    <button type="submit" class="btn-logout">Close this issue</button>
   </form>
 {% endif %}
 
