@@ -1,7 +1,7 @@
 # discussion-forum-webapp
 Sample project to deploy. 
-- [ ] Add delete button
-- [ ] Fix Empty Issue Creating Bug
+- [x] Add delete button
+- [x] Fix Empty Issue Creating Bug
 - [ ] Style comment button
 - [ ] Search codebase for env variables and add them to .env file
 - [ ] Dockerfiles
