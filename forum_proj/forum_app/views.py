@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Issue, Comment
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.views import LoginView
@@ -24,9 +24,24 @@ def create_issue(request):
     if request.method == 'POST':
         title = request.POST['title']
         description = request.POST['description']
-        Issue.objects.create(title=title, description=description, owner=request.user)
-        return redirect('dashboard')
+        if not title or not description:
+            return HttpResponseBadRequest("Can't open issue with empty fields.")
+        else:
+            Issue.objects.create(title=title, description=description, owner=request.user)
+            return redirect('dashboard')
     return render(request, 'forum_app/create_issue.html')
+
+@login_required
+def delete_issue(request, pk):
+    issue = get_object_or_404(Issue, pk=pk)
+
+    if request.user != issue.owner:
+        return HttpResponseForbidden("Only the authorised issue owner can delete it")
+    
+    if request.method == 'POST':
+        issue.delete()
+        messages.success(request, "Issue deleted successfully.")
+        return redirect('dashboard')
 
 @login_required
 def issue_detail(request, pk):

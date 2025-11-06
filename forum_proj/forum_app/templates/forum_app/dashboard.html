@@ -1,68 +1,84 @@
 {% load static %}
+
 <header>
     <link rel="stylesheet" type="text/css" href="{% static 'forum_app/styles.css' %}">
 
     <h2>Welcome, {{ request.user.username }}</h2>
 
     <div class="header-buttons">
-        <!-- Create Issue button -->
+         <!-- this one doesn't have to be button with form, 
+          since it just redirects to issue creating page -->
         <a href="{% url 'create_issue' %}" class="btn-create">Create Issue</a>
 
-        <!-- Vertical separator -->
+        
         <div class="line-vertical"></div>
 
-        <!-- Logout button -->
-        <form method="post" action="{% url 'logout' %}">
+        <form method="post" action="{% url 'logout' %}" style="display:inline;">
             {% csrf_token %}
             <button type="submit" class="btn-logout">Logout</button>
         </form>
     </div>
 </header>
 
+<hr>
 
 
 <h3>Pending Issues</h3>
 {% for issue in pending %}
-  <a href="{% url 'issue_detail' issue.id %}">{{ issue.title }}</a>
-  -
+  <a href="{% url 'issue_detail' issue.id %}" class="issue-link">{{ issue.title }}</a>
+  
   {% if issue.owner %}
     {{ issue.owner.username }}
   {% else %}
-    Publisher deleted
+    <span class="muted">Publisher deleted</span>
   {% endif %}
   <br>
 {% empty %}
-  No pending issues
+  <p class="muted">No pending issues</p>
 {% endfor %}
+
 
 <h3>Closed Issues</h3>
 {% for issue in closed %}
-  <a href="{% url 'issue_detail' issue.id %}">{{ issue.title }}</a>
-  -
+  <a href="{% url 'issue_detail' issue.id %}" class="issue-link">{{ issue.title }}</a>
+  
   {% if issue.owner %}
     {{ issue.owner.username }}
   {% else %}
-    Publisher deleted
+    <span class="muted">Publisher deleted</span>
   {% endif %}
   <br>
 {% empty %}
-  No closed issues
+  <p class="muted">No closed issues</p>
 {% endfor %}
+
 
 <h3>My Issues</h3>
 {% for issue in my_issues %}
-  <a href="{% url 'issue_detail' issue.id %}">{{ issue.title }}</a>
+  <a href="{% url 'issue_detail' issue.id %}" class="issue-link">{{ issue.title }}</a>
   ({{ issue.status }})
-  
-  {% if issue.status == 'pending' %}
-    {% if issue.owner == request.user %}
-      <a href="{% url 'close_issue' issue.id %}">Close</a>
-    {% else %}
-      <span style="color: gray;">Only the creator can close this issue</span>
-    {% endif %}
+
+  <!-- Close Issue (only for owner and if pending) -->
+  <!-- those use POST and alter database, that's why they are forms -->
+  {% if issue.status == 'pending' and issue.owner == request.user %}
+    <form method="post" action="{% url 'close_issue' issue.id %}" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn-small btn-close">Close</button>
+    </form>
+  {% elif issue.status == 'pending' %}
+    <span class="muted">Only the creator can close this issue</span>
   {% endif %}
+
+  {% if issue.owner == request.user %}
+    <form method="post" action="{% url 'delete_issue' issue.id %}" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn-small btn-delete">Delete</button>
+    </form>
+  {% else %}
+    <span class="muted">Only the creator can delete this issue</span>
+  {% endif %}
+  
   <br>
 {% empty %}
-  You have no issues
+  <p class="muted">You have no issues</p>
 {% endfor %}
-
