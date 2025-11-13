@@ -1,37 +1,36 @@
 services:
   application:
-    build: .
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      secrets:
+        - "my-env-file"
     container_name: forum-application
     restart: on-failure
     env_file:
-      - ./.env
+      - .env
     ports:
       - 8000:8000
     depends_on:
       - db
-    command: >
-      
-      sh -c "
-             echo waiting for db;
-             sleep 5;
-             python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
-    
+
   db: 
     container_name: forum-database
     image: mariadb:latest
     restart: no
     env_file:
-      - ./.env
+      - .env
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}  # or set another var
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
     volumes:
       - base_vol:/data/db
-    #ports:
-    #  - 4200:3306
 
 volumes:
   base_vol:
+
+secrets:
+  my-env-file:
+    file: ".env"

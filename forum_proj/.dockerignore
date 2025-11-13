@@ -1,0 +1,26 @@
+# Git
+.git
+.gitignore
+
+# Docker
+.dockerignore
+Dockerfile
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Local environment
+.env
+.venv/
+venv/
+env/
+Pipfile*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+.pytest_cache/
+htmlcov/

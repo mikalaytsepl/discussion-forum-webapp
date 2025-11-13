@@ -16,8 +16,8 @@ if os.getenv('DJANGO_ALLOWED_HOSTS') is None:
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
-DEBUG = os.getenv('DJANGO_DEBUG')
-ALLOWED_HOSTS =  os.getenv('DJANGO_ALLOWED_HOSTS').split(sep=",")
+DEBUG = os.getenv('DJANGO_DEBUG', 'False')
+ALLOWED_HOSTS =  os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1').split(sep=",")
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -82,6 +82,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = '/'                 # After login, go to dashboard
