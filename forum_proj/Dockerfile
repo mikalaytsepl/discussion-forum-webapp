@@ -43,8 +43,11 @@ COPY . .
 
 RUN chmod +x ./entrypoint.sh
 
-RUN --mount=type=secret,id=my-env-file,target=.env,required=true \
-    python manage.py collectstatic --noinput --clear
+# apparently collectstatic does not use secret key for hashing
+# so it's better for stability to just use dummy and then reset
+# at prod to a normal key
+ENV DJANGO_SECRET_KEY=dummy-build-key 
+RUN python manage.py collectstatic --noinput --clear
 
 RUN chown -R app:app /app
 
