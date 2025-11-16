@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forum-webapp
+  
+  namespace: forum-namespace
+  
+  labels:
+    tier: prod
+    app: forum
+spec:
+  selector:
+    matchLabels:
+      app: forum-webapp
+
+  template:
+    metadata:
+      labels:
+        app: forum-webapp
+
+    spec:
+      containers:
+      - name: forum-webapp
+        image: mikalaytsepl/forum-app-repo:1.0
+
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "500m"
+
+          limits: 
+            memory: "256Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8000
+
+      imagePullSecrets:
+      - name: dockerhub-pull-secret
+
+
