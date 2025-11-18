@@ -13,6 +13,10 @@ spec:
     matchLabels:
       app: forum-webapp
 
+  replicas: 1
+  strategy:
+    type: Recreate
+
   template:
     metadata:
       labels:
@@ -22,6 +26,13 @@ spec:
       containers:
       - name: forum-webapp
         image: mikalaytsepl/forum-app-repo:1.0
+        
+        envFrom:
+          - configMapRef: 
+              name: forum-configmap
+
+          - secretRef:
+              name: forum-app-db-secrets
 
         resources:
           requests:
@@ -36,5 +47,20 @@ spec:
 
       imagePullSecrets:
       - name: dockerhub-pull-secret
+      imagePullPolicy: 
 
 
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: forum-webapp-service
+  namespace: forum-namespace
+spec:
+  type: ClusterIP
+  selector:
+    app: forum-webapp
+  ports:
+  - port: 8000
+    targetPort: 8000

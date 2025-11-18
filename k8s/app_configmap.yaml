@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: forum-configmap
+  namespace: forum-namespace
+data:
+  DEBUG: "False"
+  DJANGO_TIME_ZONE: UTC
+
+  DB_HOST: put-db-arn-here
+  DB_PORT: "3306"
+  DB_ENGINE: mysql
