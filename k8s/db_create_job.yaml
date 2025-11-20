@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: createdb-forum
+  namespace: forum-namespace
+spec:
+  ttlSecondsAfterFinished: 60
+  template:
+    spec:
+      containers:
+      - name: dbchecker
+        image: mysql:8.0
+        
+        envFrom:
+          - configMapRef:
+              name: forum-configmap
+
+          - secretRef:
+              name: forum-app-db-secrets
+
+        command:
+          - /bin/bash
+          - -c
+          - |
+            if [ -z $DB_NAME ];then  echo "name ${DB_NAME} is empty, check if secrets are imported correctly. \n"; exit 1; else echo "DB_NAME is set, proceeding to check"; fi
+            mysql -h $DB_HOST -u $DB_USER -p$DB_PASSWORD $DB_NAME 2>/dev/null
+            test_db=$?
+            if (( ${test_db} == 1 )); then
+             echo "no db was found, creating";
+             mysql -h $DB_HOST -u $DB_USER -p$DB_PASSWORD -e "CREATE DATABASE forum_db;"
+             if (( $? == 0 ));then echo "db created, verifying ..."; fi
+             mysql -h $DB_HOST -u $DB_USER -p$DB_PASSWORD $DB_NAME -e "use ${DB_NAME};"
+             if (( $? == 0 ));then echo "db is reacheable, the job is done here"; fi
+             exit 0
+            else
+              echo "database ${DB_NAME} is already present, exiting"
+            fi
+
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+
+      imagePullSecrets:
+        - name: dockerhub-pull-secret
+
+      restartPolicy: Never

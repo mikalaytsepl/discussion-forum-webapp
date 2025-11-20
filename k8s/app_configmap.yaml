@@ -6,7 +6,5 @@ metadata:
 data:
   DEBUG: "False"
   DJANGO_TIME_ZONE: UTC
-
-  DB_HOST: put-db-arn-here
   DB_PORT: "3306"
   DB_ENGINE: mysql
