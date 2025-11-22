@@ -8,3 +8,6 @@ data:
   DJANGO_TIME_ZONE: UTC
   DB_PORT: "3306"
   DB_ENGINE: mysql
+
+  DJANGO_ALLOWED_HOSTS: "mk-tsp.xyz,k8s-forumingress-123456789.eu-north-1.elb.amazonaws.com,127.0.0.1,*.cluster.local,*"
+  DJANGO_CSRF_TRUSTED_ORIGINS: "https://mk-tsp.xyz,https://k8s-forumingress-123456789.eu-north-1.elb.amazonaws.com"
