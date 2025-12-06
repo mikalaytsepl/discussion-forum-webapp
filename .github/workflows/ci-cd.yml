@@ -1,0 +1,198 @@
+name: ci-cd
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run tests
+        run: |
+          if command -v pytest >/dev/null 2>&1; then
+            pytest
+          else
+            echo "pytest not installed or no tests yet - skipping"
+          fi
+
+      - name: Install Bandit
+        run: |
+          pip install bandit
+
+      - name: Run Bandit SAST scan
+        run: |
+          bandit -r . -ll -ii -f txt -o bandit-report.txt
+
+      - name: Show Bandit report in logs
+        if: always()
+        run: |
+          echo "===== BANDIT REPORT START ====="
+          cat bandit-report.txt || echo "Brak pliku bandit-report.txt"
+          echo "===== BANDIT REPORT END ====="
+
+      - name: Upload Bandit report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.txt
+
+  aws-connection-test:
+    needs: build-image
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   
+      contents: read    
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::666524608350:role/github-actions-eks-role
+          aws-region: eu-north-1
+
+      - name: Test AWS connection (STS GetCallerIdentity)
+        run: |
+          echo "Wywołuję aws sts get-caller-identity..."
+          aws sts get-caller-identity
+
+
+  build-image:
+    needs: tests
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write 
+      contents: read 
+    env:
+      AWS_REGION: eu-north-1     
+      AWS_ACCOUNT_ID: "666524608350"     
+      ECR_REPOSITORY: "forum-app"         
+      IMAGE_TAG: "${{ github.sha }}"        
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::666524608350:role/github-actions-eks-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION \
+            | docker login \
+              --username AWS \
+              --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+
+      - name: Build Docker image
+        run: |
+          echo "Buduję obraz Dockera z Dockerfile..."
+          docker build -t $ECR_REPOSITORY:$IMAGE_TAG forum_proj
+
+          # Tagujemy obraz pełnym adresem ECR
+          docker tag $ECR_REPOSITORY:$IMAGE_TAG \
+            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          format: 'table'      
+          exit-code: '0'              
+          ignore-unfixed: true       
+          vuln-type: 'os,library'          
+          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+          
+      - name: Push image to Amazon ECR
+        run: |
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
+
+  deploy-to-eks:
+    needs: build-image
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      AWS_REGION: eu-north-1
+      AWS_ACCOUNT_ID: "666524608350"
+      EKS_CLUSTER_NAME: "forum-cluster-2"
+      K8S_NAMESPACE: "forum-namespace" 
+      K8S_DEPLOYMENT: "forum-webapp" 
+      K8S_CONTAINER_NAME: "forum-webapp"
+      ECR_REPOSITORY: "forum-app"
+      IMAGE_TAG: "${{ github.sha }}"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::666524608350:role/github-actions-eks-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig \
+            --name $EKS_CLUSTER_NAME \
+            --region $AWS_REGION
+
+      - name: Set new image in Deployment
+        run: |
+          NEW_IMAGE="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "Ustawiam obraz: $NEW_IMAGE"
+          kubectl set image deployment/$K8S_DEPLOYMENT \
+            $K8S_CONTAINER_NAME=$NEW_IMAGE \
+            -n $K8S_NAMESPACE
+
+      - name: Wait for rollout to finish
+        run: |
+          kubectl rollout status deployment/$K8S_DEPLOYMENT \
+            -n $K8S_NAMESPACE \
+            --timeout=300s
+
+      - name: Show pods after deploy
+        run: |
+          kubectl get pods -n $K8S_NAMESPACE
+
+  dast-zap:
+    needs: deploy-to-eks
+    runs-on: ubuntu-latest
+
+    env:
+      APP_URL: "http://k8s-forumnam-foruming-cc265db803-663786899.eu-north-1.elb.amazonaws.com"
+
+    steps:
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: ${{ env.APP_URL }}
+          fail_action: false
+          allow_issue_writing: false
+          cmd_options: "-a"
