@@ -1,3 +1,10 @@
+body {
+    font-family: 'Verdana', sans-serif;
+	font-size: 16px;
+}
+
+button { font: inherit; }
+
 .header-buttons {
     display: flex;
     align-items: center; 
