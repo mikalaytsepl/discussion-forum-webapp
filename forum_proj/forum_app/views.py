@@ -7,7 +7,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.views import LoginView
 from django.conf import settings
-from .forms import IssueForm
+from .forms import IssueForm, CommentForm
 
 @login_required
 def dashboard(request):
@@ -49,14 +49,26 @@ def delete_issue(request, pk):
 @login_required
 def issue_detail(request, pk):
     issue = get_object_or_404(Issue, pk=pk)
+
+    form = CommentForm()
+
     if request.method == 'POST':
         if issue.status == 'closed':
             return HttpResponseForbidden("Cannot comment on closed issues.")
-        Comment.objects.create(
-            issue=issue, author=request.user, content=request.POST['content']
-        )
-        return redirect('issue_detail', pk=pk)
-    return render(request, 'forum_app/issue_detail.html', {'issue': issue})
+            
+        form = CommentForm(request.POST)
+        
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.issue = issue
+            comment.author = request.user
+            comment.save()
+            return redirect('issue_detail', pk=pk)
+
+    return render(request, 'forum_app/issue_detail.html', {
+        'issue': issue, 
+        'form': form
+    })
 
 @login_required
 def close_issue(request, pk):
