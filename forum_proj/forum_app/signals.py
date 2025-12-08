@@ -2,6 +2,7 @@ import logging
 from django.contrib.auth.signals import user_logged_in, user_logged_out, user_login_failed
 from django.dispatch import receiver
 from axes.signals import user_locked_out
+from axes.handlers.proxy import AxesProxyHandler
 
 logger = logging.getLogger('forum_app')
 
@@ -28,6 +29,8 @@ def log_user_logout(sender, request, user, **kwargs):
 def log_user_login_failed(sender, credentials, request, **kwargs):
     ip = get_client_ip(request)
     username = credentials.get('username', 'unknown')
+    if request and AxesProxyHandler.is_locked(request, credentials):
+        return
     logger.warning(f"SECURITY: Login Failed | Attempted User: {username} | IP: {ip}")
 
 @receiver(user_locked_out)

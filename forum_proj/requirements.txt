@@ -8,5 +8,5 @@ packaging==25.0
 python-dotenv==1.2.1
 sqlparse==0.5.3
 whitenoise==6.11.0
-django-axes==6.0.0
+django-axes==8.0.0
 python-json-logger==2.0.7
