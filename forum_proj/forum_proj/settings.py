@@ -139,7 +139,7 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': 'WARNING',
+            'level': 'ERROR',
             'propagate': True,
         },
         'forum_app': {
@@ -149,7 +149,7 @@ LOGGING = {
         },
         'axes': {
             'handlers': ['console'],
-            'level': 'WARNING',
+            'level': 'ERROR',
             'propagate': True,
         },
     },

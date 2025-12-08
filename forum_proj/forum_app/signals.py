@@ -1,6 +1,7 @@
 import logging
 from django.contrib.auth.signals import user_logged_in, user_logged_out, user_login_failed
 from django.dispatch import receiver
+from axes.signals import user_locked_out
 
 logger = logging.getLogger('forum_app')
 
@@ -28,3 +29,7 @@ def log_user_login_failed(sender, credentials, request, **kwargs):
     ip = get_client_ip(request)
     username = credentials.get('username', 'unknown')
     logger.warning(f"SECURITY: Login Failed | Attempted User: {username} | IP: {ip}")
+
+@receiver(user_locked_out)
+def log_user_lockout(request, username, ip_address, **kwargs):
+    logger.error(f"SECURITY: Brute Force Lockout | User: {username} | IP: {ip_address}")
