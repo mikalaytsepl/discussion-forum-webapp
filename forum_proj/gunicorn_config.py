@@ -1,5 +1,7 @@
 import multiprocessing
 import os
+import logging
+from gunicorn.glogging import Logger
 
 bind = "0.0.0.0:8000"
 
@@ -32,3 +34,14 @@ errorlog = "-"
 loglevel = "info"
 # Capture stdout/stderr from the application specifically
 capture_output = True
+
+class CustomLogger(Logger):
+    def setup(self, cfg):
+        super().setup(cfg)
+        self.access_log.addFilter(StaticFilter())
+
+class StaticFilter(logging.Filter):
+    def filter(self, record):
+        return '/static/' not in record.getMessage()
+
+logger_class = CustomLogger
