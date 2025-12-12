@@ -5,7 +5,7 @@ from django.contrib.auth.views import LoginView
 from forum_app.views import signup
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('management-portal-secure-access/', admin.site.urls),
     
     # your app's routes (dashboard, create issue, etc.)
     path('', include('forum_app.urls')),
