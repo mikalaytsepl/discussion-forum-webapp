@@ -9,5 +9,5 @@ data:
   DB_PORT: "3306"
   DB_ENGINE: mysql
 
-  DJANGO_ALLOWED_HOSTS: "mk-tsp.xyz,k8s-forumingress-123456789.eu-north-1.elb.amazonaws.com,127.0.0.1,*.cluster.local,*"
-  DJANGO_CSRF_TRUSTED_ORIGINS: "https://mk-tsp.xyz,https://k8s-forumingress-123456789.eu-north-1.elb.amazonaws.com"
+  DJANGO_ALLOWED_HOSTS: "iho-test.xyz,k8s-forumnam-foruming-73c6b76374-187591109.eu-north-1.elb.amazonaws.com,127.0.0.1,*.cluster.local,*"
+  DJANGO_CSRF_TRUSTED_ORIGINS: "https://iho-test.xyz,https://k8s-forumnam-foruming-73c6b76374-187591109.eu-north-1.elb.amazonaws.com"

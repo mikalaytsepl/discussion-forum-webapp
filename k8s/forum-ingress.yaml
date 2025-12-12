@@ -7,12 +7,18 @@ metadata:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-north-1:107249952346:certificate/442dae11-1b4b-45f8-b63c-06040d8ea046
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-north-1:954552668021:certificate/a82bef1b-4b67-48bc-807a-202de3f4eaf2
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
+
+    # healthcheck endpoint
+    alb.ingress.kubernetes.io/healthcheck-path: /accounts/login/
+    alb.ingress.kubernetes.io/success-codes: "200"
+
 spec:
+  ingressClassName: alb
   rules:
-  - host: mk-tsp.xyz 
+  - host: iho-test.xyz
     http:
       paths:
       - pathType: Prefix
