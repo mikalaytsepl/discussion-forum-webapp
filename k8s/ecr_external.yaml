@@ -1,0 +1,33 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: ecr-docker-secret
+  namespace: forum-namespace
+spec:
+  # they live 12h btw
+  refreshInterval: 4h
+  
+  dataFrom:
+  - sourceRef:
+      generatorRef:
+        apiVersion: generators.external-secrets.io/v1alpha1
+        kind: ECRAuthorizationToken
+        name: ecr-token-generator
+  
+  target:
+    name: ecr-pull-creds 
+    creationPolicy: Owner
+    template:
+      type: kubernetes.io/dockerconfigjson
+      data:
+        .dockerconfigjson: |
+          {
+            "auths": {
+              "{{ .proxy_endpoint }}": {
+                "username": "{{ .username }}",
+                "password": "{{ .password }}",
+                "email": "none",
+                "auth": "{{ (printf "%s:%s" .username .password) | b64enc }}"
+              }
+            }
+          }

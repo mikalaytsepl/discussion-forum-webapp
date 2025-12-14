@@ -1,0 +1,11 @@
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: ECRAuthorizationToken
+metadata:
+  name: ecr-token-generator
+  namespace: forum-namespace
+spec:
+  region: eu-north-1
+  auth:
+    jwt:
+      serviceAccountRef:
+        name: ecr-pull
