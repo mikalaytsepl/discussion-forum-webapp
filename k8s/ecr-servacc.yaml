@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ecr-pull
+  namespace: forum-namespace
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::954552668021:policy/ecr_pull_policy
