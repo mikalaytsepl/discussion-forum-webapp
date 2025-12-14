@@ -64,6 +64,7 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
+AXES_CLIENT_IP_CALLABLE = 'forum_app.utils.get_client_ip'
 AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = 1
 AXES_RESET_ON_SUCCESS = True
