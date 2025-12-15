@@ -68,7 +68,7 @@ jobs:
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::666524608350:role/github-actions-eks-role
+          role-to-assume: arn:aws:iam::954552668021:role/github-actions-eks-role
           aws-region: eu-north-1
 
       - name: Test AWS connection (STS GetCallerIdentity)
@@ -85,8 +85,8 @@ jobs:
       contents: read 
     env:
       AWS_REGION: eu-north-1     
-      AWS_ACCOUNT_ID: "666524608350"     
-      ECR_REPOSITORY: "forum-app"         
+      AWS_ACCOUNT_ID: "954552668021"     
+      ECR_REPOSITORY: "forum-app-test-repo"         
       IMAGE_TAG: "${{ github.sha }}"        
 
     steps:
@@ -96,7 +96,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::666524608350:role/github-actions-eks-role
+          role-to-assume: arn:aws:iam::954552668021:role/github-actions-eks-role
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
@@ -139,12 +139,12 @@ jobs:
 
     env:
       AWS_REGION: eu-north-1
-      AWS_ACCOUNT_ID: "666524608350"
-      EKS_CLUSTER_NAME: "forum-cluster-2"
+      AWS_ACCOUNT_ID: "954552668021"
+      EKS_CLUSTER_NAME: "forum-app"
       K8S_NAMESPACE: "forum-namespace" 
       K8S_DEPLOYMENT: "forum-webapp" 
       K8S_CONTAINER_NAME: "forum-webapp"
-      ECR_REPOSITORY: "forum-app"
+      ECR_REPOSITORY: "forum-app-test-repo"
       IMAGE_TAG: "${{ github.sha }}"
 
     steps:
@@ -154,7 +154,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::666524608350:role/github-actions-eks-role
+          role-to-assume: arn:aws:iam::954552668021:role/github-actions-eks-role
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Update kubeconfig for EKS
@@ -186,7 +186,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      APP_URL: "http://k8s-forumnam-foruming-cc265db803-663786899.eu-north-1.elb.amazonaws.com"
+      APP_URL: "https://iho-test.xyz"
 
     steps:
       - name: ZAP Baseline Scan
