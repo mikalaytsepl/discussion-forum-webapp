@@ -1,64 +1,104 @@
 {% load static %}
-<link rel="stylesheet" type="text/css" href="{% static 'forum_app/styles.css' %}">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ issue.title }} - Forum App</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'forum_app/styles.css' %}">
+</head>
+<body>
+    <div class="container">
+        <div style="margin-bottom: 30px;">
+            <a href="{% url 'dashboard' %}" class="btn btn-create">← Back to Dashboard</a>
+        </div>
 
-<h2>{{ issue.title }}</h2>
-<a href="{% url 'dashboard' %}" class="btn-create">Back to Dashboard</a>
-<p>{{ issue.description }}</p>
-<p>Status: {{ issue.status }}</p>
+        <article>
+            <h2>{{ issue.title }}</h2>
+            <span class="status-badge status-{{ issue.status }}">{{ issue.status|title }}</span>
+            
+            <div class="issue-meta" style="margin: 20px 0;">
+                Posted by 
+                {% if issue.owner %}
+                    <strong>{{ issue.owner.username }}</strong>
+                {% else %}
+                    <span class="muted">Publisher deleted</span>
+                {% endif %}
+                • {{ issue.created_at|date:"M d, Y H:i" }}
+            </div>
 
-<p>
-  Owner:
-  {% if issue.owner %}
-    {{ issue.owner.username }}
-  {% else %}
-    Publisher deleted
-  {% endif %}
-</p>
+            <div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <p style="white-space: pre-wrap;">{{ issue.description }}</p>
+            </div>
 
-<hr>
+            {% if issue.status == 'pending' and request.user.id == issue.owner_id %}
+            <form action="{% url 'close_issue' issue.id %}" method="post" style="margin: 20px 0;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-close">Mark as Closed</button>
+            </form>
+            {% endif %}
+        </article>
 
-{% if issue.status == 'pending' %}
-  <h3>Add a Comment</h3>
-  <form method="post">
-    {% csrf_token %}
-    
-    {{ form.non_field_errors }}
-    
-    <div class="form-group">
-        {{ form.content.errors }}
-        {{ form.content }}
-    </div>
-    
-    <button type="submit" style="margin-top: 10px;">Comment</button>
-  </form>
-{% endif %}
+        <hr>
 
-<hr>
-
-{% if issue.status == 'pending' and request.user.id == issue.owner_id %}
-  <form action="{% url 'close_issue' issue.id %}" method="post">
-    {% csrf_token %}
-    <button type="submit" class="btn-logout">Close this issue</button>
-  </form>
-{% endif %}
-
-<h3>Comments:</h3>
-{% for c in issue.comments.all %}
-  <div style="border-bottom: 1px solid #eee; margin-bottom: 10px; padding-bottom: 5px;">
-    <p>
-      <b>
-        {% if c.author %}
-          {{ c.author.username }}
+        {% if issue.status == 'pending' %}
+        <section>
+            <h3>💬 Add a Comment</h3>
+            <form method="post">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <ul class="errorlist">
+                    {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                
+                {% if form.content.errors %}
+                <ul class="errorlist">
+                    {% for error in form.content.errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                
+                {{ form.content }}
+                
+                <button type="submit" style="margin-top: 10px;">Post Comment</button>
+            </form>
+        </section>
         {% else %}
-          Deleted user
+        <div class="empty-state">
+            <p>This issue is closed. No more comments can be added.</p>
+        </div>
         {% endif %}
-      </b>
-      <span style="font-size: 0.8em; color: #666;">
-        - {{ c.created_at|date:"M d, Y H:i" }}
-      </span>
-    </p>
-    <p>{{ c.content }}</p>
-  </div>
-{% empty %}
-  <p>No comments yet.</p>
-{% endfor %}
+
+        <hr>
+
+        <section>
+            <h3>Comments ({{ issue.comments.count }})</h3>
+            {% for c in issue.comments.all %}
+            <div class="comment">
+                <div class="comment-header">
+                    <span class="comment-author">
+                        {% if c.author %}
+                            {{ c.author.username }}
+                        {% else %}
+                            <span class="muted">Deleted user</span>
+                        {% endif %}
+                    </span>
+                    <span class="comment-date">{{ c.created_at|date:"M d, Y H:i" }}</span>
+                </div>
+                <div class="comment-content">{{ c.content }}</div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <div class="empty-state-icon">💭</div>
+                <p>No comments yet. Be the first to comment!</p>
+            </div>
+            {% endfor %}
+        </section>
+    </div>
+</body>
+</html>
