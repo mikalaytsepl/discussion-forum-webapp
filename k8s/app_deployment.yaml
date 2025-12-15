@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
       - name: forum-webapp
-        image: mikalaytsepl/forum-app-repo:1.3
+        image: 954552668021.dkr.ecr.eu-north-1.amazonaws.com/forum-app-test-repo:v5
         
         envFrom:
           - configMapRef: 
@@ -46,7 +46,8 @@ spec:
         - containerPort: 8000
 
       imagePullSecrets:
-      - name: dockerhub-pull-secret
+#      - name: dockerhub-pull-secret
+      - name: ecr-pull-creds
 
 
 
