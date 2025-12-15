@@ -54,29 +54,6 @@ jobs:
           name: bandit-report
           path: bandit-report.txt
 
-  aws-connection-test:
-    needs: build-image
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write   
-      contents: read    
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::954552668021:role/github-actions-eks-role
-          aws-region: eu-north-1
-
-      - name: Test AWS connection (STS GetCallerIdentity)
-        run: |
-          echo "Wywołuję aws sts get-caller-identity..."
-          aws sts get-caller-identity
-
-
   build-image:
     needs: tests
     runs-on: ubuntu-latest
@@ -106,15 +83,18 @@ jobs:
               --username AWS \
               --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
-
       - name: Build Docker image
         run: |
-          echo "Buduję obraz Dockera z Dockerfile..."
+          echo "Building Docker image with tag: $IMAGE_TAG"
           docker build -t $ECR_REPOSITORY:$IMAGE_TAG forum_proj
 
-          # Tagujemy obraz pełnym adresem ECR
+          # Tag with commit SHA (primary tag)
           docker tag $ECR_REPOSITORY:$IMAGE_TAG \
             $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
+          
+          # Also tag as 'latest' for convenience
+          docker tag $ECR_REPOSITORY:$IMAGE_TAG \
+            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
 
       - name: Scan Docker image with Trivy
         uses: aquasecurity/trivy-action@0.28.0
@@ -128,7 +108,11 @@ jobs:
           
       - name: Push image to Amazon ECR
         run: |
+          echo "Pushing image with SHA tag: $IMAGE_TAG"
           docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
+          
+          echo "Pushing image with latest tag"
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
 
   deploy-to-eks:
     needs: build-image
@@ -141,8 +125,8 @@ jobs:
       AWS_REGION: eu-north-1
       AWS_ACCOUNT_ID: "954552668021"
       EKS_CLUSTER_NAME: "forum-app"
-      K8S_NAMESPACE: "forum-namespace" 
-      K8S_DEPLOYMENT: "forum-webapp" 
+      K8S_NAMESPACE: "forum-namespace"
+      K8S_DEPLOYMENT: "forum-webapp"
       K8S_CONTAINER_NAME: "forum-webapp"
       ECR_REPOSITORY: "forum-app-test-repo"
       IMAGE_TAG: "${{ github.sha }}"
@@ -163,23 +147,67 @@ jobs:
             --name $EKS_CLUSTER_NAME \
             --region $AWS_REGION
 
-      - name: Set new image in Deployment
+      - name: Verify cluster connection
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+
+      - name: Update deployment with new image
         run: |
           NEW_IMAGE="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG"
-          echo "Ustawiam obraz: $NEW_IMAGE"
-          kubectl set image deployment/$K8S_DEPLOYMENT \
-            $K8S_CONTAINER_NAME=$NEW_IMAGE \
-            -n $K8S_NAMESPACE
+          TIMESTAMP=$(date +%s)
+          
+          echo "Updating deployment to image: $NEW_IMAGE"
+          echo "Adding rollout timestamp: $TIMESTAMP"
+          
+          # Patch both image and annotation to force rollout
+          kubectl patch deployment $K8S_DEPLOYMENT -n $K8S_NAMESPACE \
+            --type='json' \
+            -p="[
+              {\"op\": \"replace\", \"path\": \"/spec/template/spec/containers/0/image\", \"value\": \"$NEW_IMAGE\"},
+              {\"op\": \"replace\", \"path\": \"/spec/template/metadata/annotations/rollout-timestamp\", \"value\": \"$TIMESTAMP\"}
+            ]"
 
-      - name: Wait for rollout to finish
+      - name: Wait for rollout to complete
         run: |
+          echo "Waiting for deployment rollout to complete..."
           kubectl rollout status deployment/$K8S_DEPLOYMENT \
             -n $K8S_NAMESPACE \
             --timeout=300s
 
-      - name: Show pods after deploy
+      - name: Verify deployment
         run: |
-          kubectl get pods -n $K8S_NAMESPACE
+          echo "===== Deployment Status ====="
+          kubectl get deployment $K8S_DEPLOYMENT -n $K8S_NAMESPACE
+          
+          echo ""
+          echo "===== Running Pods ====="
+          kubectl get pods -n $K8S_NAMESPACE -l app=$K8S_DEPLOYMENT
+          
+          echo ""
+          echo "===== Deployed Image ====="
+          DEPLOYED_IMAGE=$(kubectl get deployment $K8S_DEPLOYMENT -n $K8S_NAMESPACE -o jsonpath='{.spec.template.spec.containers[0].image}')
+          echo "Current image: $DEPLOYED_IMAGE"
+          
+          EXPECTED_IMAGE="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "Expected image: $EXPECTED_IMAGE"
+          
+          if [ "$DEPLOYED_IMAGE" = "$EXPECTED_IMAGE" ]; then
+            echo "Image verification successful!"
+          else
+            echo "Image mismatch detected!"
+            exit 1
+          fi
+
+      - name: Show recent events (if deployment failed)
+        if: failure()
+        run: |
+          echo "===== Recent Events ====="
+          kubectl get events -n $K8S_NAMESPACE --sort-by='.lastTimestamp' | tail -20
+          
+          echo ""
+          echo "===== Pod Logs ====="
+          kubectl logs -n $K8S_NAMESPACE -l app=$K8S_DEPLOYMENT --tail=50 || true
 
   dast-zap:
     needs: deploy-to-eks
@@ -189,6 +217,11 @@ jobs:
       APP_URL: "https://iho-test.xyz"
 
     steps:
+      - name: Wait for application to be ready
+        run: |
+          echo "Waiting 30 seconds for application to stabilize..."
+          sleep 30
+
       - name: ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.15.0
         with:

@@ -1,5 +1,5 @@
 asgiref==3.10.0
-Django==5.2.7
+Django==5.2.9
 dotenv==0.9.9
 gunicorn==23.0.0
 mariadb==1.1.14

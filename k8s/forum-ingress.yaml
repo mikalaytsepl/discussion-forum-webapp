@@ -11,7 +11,6 @@ metadata:
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
     alb.ingress.kubernetes.io/wafv2-acl-arn: 'arn:aws:wafv2:eu-north-1:954552668021:regional/webacl/forum-web-acl/cd4a491e-53a7-4394-b459-ea5f2fe3baee'
-    # healthcheck endpoint
     alb.ingress.kubernetes.io/healthcheck-path: /accounts/login/
     alb.ingress.kubernetes.io/success-codes: "200"
 
