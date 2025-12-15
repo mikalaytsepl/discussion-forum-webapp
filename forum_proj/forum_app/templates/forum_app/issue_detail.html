@@ -2,8 +2,7 @@
 <link rel="stylesheet" type="text/css" href="{% static 'forum_app/styles.css' %}">
 
 <h2>{{ issue.title }}</h2>
-<a href="{% url 'dashboard' %}"
-class="btn-create">Back to Dashboard</a>
+<a href="{% url 'dashboard' %}" class="btn-create">Back to Dashboard</a>
 <p>{{ issue.description }}</p>
 <p>Status: {{ issue.status }}</p>
 
@@ -16,13 +15,25 @@ class="btn-create">Back to Dashboard</a>
   {% endif %}
 </p>
 
+<hr>
+
 {% if issue.status == 'pending' %}
+  <h3>Add a Comment</h3>
   <form method="post">
     {% csrf_token %}
-    <textarea name="content" placeholder="Add a comment"></textarea><br>
-    <button type="submit">Comment</button>
+    
+    {{ form.non_field_errors }}
+    
+    <div class="form-group">
+        {{ form.content.errors }}
+        {{ form.content }}
+    </div>
+    
+    <button type="submit" style="margin-top: 10px;">Comment</button>
   </form>
 {% endif %}
+
+<hr>
 
 {% if issue.status == 'pending' and request.user.id == issue.owner_id %}
   <form action="{% url 'close_issue' issue.id %}" method="post">
@@ -33,16 +44,21 @@ class="btn-create">Back to Dashboard</a>
 
 <h3>Comments:</h3>
 {% for c in issue.comments.all %}
-  <p>
-    <b>
-      {% if c.author %}
-        {{ c.author.username }}
-      {% else %}
-        Deleted user
-      {% endif %}
-    </b>:
-    {{ c.content }}
-  </p>
+  <div style="border-bottom: 1px solid #eee; margin-bottom: 10px; padding-bottom: 5px;">
+    <p>
+      <b>
+        {% if c.author %}
+          {{ c.author.username }}
+        {% else %}
+          Deleted user
+        {% endif %}
+      </b>
+      <span style="font-size: 0.8em; color: #666;">
+        - {{ c.created_at|date:"M d, Y H:i" }}
+      </span>
+    </p>
+    <p>{{ c.content }}</p>
+  </div>
 {% empty %}
-  No comments yet.
+  <p>No comments yet.</p>
 {% endfor %}

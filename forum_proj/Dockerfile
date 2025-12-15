@@ -56,4 +56,4 @@ USER app
 EXPOSE 8000
 
 ENTRYPOINT [ "./entrypoint.sh" ]
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "forum_proj.wsgi:application"]
+CMD ["gunicorn", "-c", "gunicorn_config.py", "forum_proj.wsgi:application"]

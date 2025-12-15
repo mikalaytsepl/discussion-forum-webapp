@@ -1,9 +1,17 @@
 {% load static %}
 <link rel="stylesheet" type="text/css" href="{% static 'forum_app/styles.css' %}">
 
+<h2>Create a New Issue</h2>
+
 <form method="post">
   {% csrf_token %}
-  <label>Title: </label><input type="text" name="title"><br><br>
-  <label>Description: </label><textarea name="description"></textarea><br><br>
-  <button type="submit" class="btn-logout">Create</button>
+  
+  {# This replaces the manual <input> tags #}
+  {{ form.as_p }}
+  
+  <button type="submit" class="btn-create">Create</button>
 </form>
+
+<p>
+    <a href="{% url 'dashboard' %}">Back to Dashboard</a>
+</p>
