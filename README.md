@@ -1,10 +1,6 @@
 # discussion-forum-webapp
-Sample project to deploy. 
-- [x] Add delete button
-- [x] Fix Empty Issue Creating Bug
-- [ ] Style comment button
-- [ ] Search codebase for env variables and add them to .env file
-- [ ] Dockerfiles
-- [ ] Docker compose
-- [ ] If time, start k8s (static)
-- [ ] AWS (at least rds for base)
+---
+- [ ] Fix critical issues in docker image
+- [ ] Optimize CI/CD for k8s deployment configuration;
+    - [ ] (Optional) Make some logical changes
+- [ ] (Optional) Add IPS/IDS service in AWS

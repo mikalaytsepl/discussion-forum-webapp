@@ -7,6 +7,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.views import LoginView
 from django.conf import settings
+from .forms import IssueForm, CommentForm
 
 @login_required
 def dashboard(request):
@@ -22,14 +23,16 @@ def dashboard(request):
 @login_required
 def create_issue(request):
     if request.method == 'POST':
-        title = request.POST['title']
-        description = request.POST['description']
-        if not title or not description:
-            return HttpResponseBadRequest("Can't open issue with empty fields.")
-        else:
-            Issue.objects.create(title=title, description=description, owner=request.user)
+        form = IssueForm(request.POST)
+        if form.is_valid():
+            issue = form.save(commit=False)
+            issue.owner = request.user
+            issue.save()
             return redirect('dashboard')
-    return render(request, 'forum_app/create_issue.html')
+    else:
+        form = IssueForm()
+    
+    return render(request, 'forum_app/create_issue.html', {'form': form})
 
 @login_required
 def delete_issue(request, pk):
@@ -46,14 +49,26 @@ def delete_issue(request, pk):
 @login_required
 def issue_detail(request, pk):
     issue = get_object_or_404(Issue, pk=pk)
+
+    form = CommentForm()
+
     if request.method == 'POST':
         if issue.status == 'closed':
             return HttpResponseForbidden("Cannot comment on closed issues.")
-        Comment.objects.create(
-            issue=issue, author=request.user, content=request.POST['content']
-        )
-        return redirect('issue_detail', pk=pk)
-    return render(request, 'forum_app/issue_detail.html', {'issue': issue})
+            
+        form = CommentForm(request.POST)
+        
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.issue = issue
+            comment.author = request.user
+            comment.save()
+            return redirect('issue_detail', pk=pk)
+
+    return render(request, 'forum_app/issue_detail.html', {
+        'issue': issue, 
+        'form': form
+    })
 
 @login_required
 def close_issue(request, pk):
@@ -74,7 +89,7 @@ def signup(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            auth_login(request, user)
+            auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')            
             return redirect(getattr(settings, "LOGIN_REDIRECT_URL", "/"))
     else:
         form = UserCreationForm()

@@ -2,9 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: forum-webapp
-  
   namespace: forum-namespace
-  
   labels:
     tier: prod
     app: forum
@@ -15,41 +13,67 @@ spec:
 
   replicas: 1
   strategy:
-    type: Recreate
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
 
   template:
     metadata:
       labels:
         app: forum-webapp
+      annotations:
+        # This annotation will be updated to force rollout
+        rollout-timestamp: "initial"
 
     spec:
       containers:
       - name: forum-webapp
-        image: 954552668021.dkr.ecr.eu-north-1.amazonaws.com/forum-app-test-repo:v5
+        # Use :latest tag - pipeline will update to specific SHA
+        image: 954552668021.dkr.ecr.eu-north-1.amazonaws.com/forum-app-test-repo:latest
+        # Always pull to ensure we get the latest image
+        imagePullPolicy: Always
         
         envFrom:
           - configMapRef: 
               name: forum-configmap
-
           - secretRef:
               name: forum-app-db-secrets
+          - secretRef:
+              name: forum-app-django-secrets
 
         resources:
           requests:
             memory: "128Mi"
             cpu: "500m"
-
           limits: 
             memory: "256Mi"
             cpu: "500m"
+            
         ports:
         - containerPort: 8000
+        
+        # Health checks
+        readinessProbe:
+          httpGet:
+            path: /accounts/login/
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          
+        livenessProbe:
+          httpGet:
+            path: /accounts/login/
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
 
       imagePullSecrets:
-#      - name: dockerhub-pull-secret
       - name: ecr-pull-creds
-
-
 
 ---
 apiVersion: v1

@@ -1,0 +1,124 @@
+{
+  "Name": "forum-web-acl",
+  "Scope": "REGIONAL",
+  "DefaultAction": { "Allow": {} },
+  "VisibilityConfig": {
+    "SampledRequestsEnabled": true,
+    "CloudWatchMetricsEnabled": true,
+    "MetricName": "forum-web-acl"
+  },
+  "Rules": [
+    {
+      "Name": "AWS-AWSManagedRulesCommonRuleSet",
+      "Priority": 0,
+      "Statement": {
+        "ManagedRuleGroupStatement": {
+          "VendorName": "AWS",
+          "Name": "AWSManagedRulesCommonRuleSet"
+        }
+      },
+      "OverrideAction": { "None": {} },
+      "VisibilityConfig": {
+        "SampledRequestsEnabled": true,
+        "CloudWatchMetricsEnabled": true,
+        "MetricName": "AWS-CommonRuleSet"
+      }
+    },
+    {
+      "Name": "AWS-AWSManagedRulesSQLiRuleSet",
+      "Priority": 1,
+      "Statement": {
+        "ManagedRuleGroupStatement": {
+          "VendorName": "AWS",
+          "Name": "AWSManagedRulesSQLiRuleSet"
+        }
+      },
+      "OverrideAction": { "None": {} },
+      "VisibilityConfig": {
+        "SampledRequestsEnabled": true,
+        "CloudWatchMetricsEnabled": true,
+        "MetricName": "AWS-SQLiRuleSet"
+      }
+    },
+    {
+      "Name": "AWS-AWSManagedRulesKnownBadInputsRuleSet",
+      "Priority": 2,
+      "Statement": {
+        "ManagedRuleGroupStatement": {
+          "VendorName": "AWS",
+          "Name": "AWSManagedRulesKnownBadInputsRuleSet"
+        }
+      },
+      "OverrideAction": { "None": {} },
+      "VisibilityConfig": {
+        "SampledRequestsEnabled": true,
+        "CloudWatchMetricsEnabled": true,
+        "MetricName": "AWS-KnownBadInputsRuleSet"
+      }
+    },
+    {
+      "Name": "ProtectAuth",
+      "Priority": 3,
+      "Action": { "Block": {} },
+      "VisibilityConfig": {
+        "SampledRequestsEnabled": true,
+        "CloudWatchMetricsEnabled": true,
+        "MetricName": "ProtectAuth"
+      },
+      "Statement": {
+        "RateBasedStatement": {
+          "Limit": 100,
+          "AggregateKeyType": "IP",
+          "ScopeDownStatement": {
+            "ByteMatchStatement": {
+              "SearchString": "L2FjY291bnRzLw==",
+              "FieldToMatch": { "UriPath": {} },
+              "TextTransformations": [{ "Priority": 0, "Type": "NONE" }],
+              "PositionalConstraint": "STARTS_WITH"
+            }
+          }
+        }
+      }
+    },
+    {
+      "Name": "ProtectAdmin",
+      "Priority": 4,
+      "Action": { "Block": {} },
+      "VisibilityConfig": {
+        "SampledRequestsEnabled": true,
+        "CloudWatchMetricsEnabled": true,
+        "MetricName": "ProtectAdmin"
+      },
+      "Statement": {
+        "RateBasedStatement": {
+          "Limit": 100,
+          "AggregateKeyType": "IP",
+          "ScopeDownStatement": {
+            "ByteMatchStatement": {
+              "SearchString": "L21hbmFnZW1lbnQtcG9ydGFsLXNlY3VyZS1hY2Nlc3Mv",
+              "FieldToMatch": { "UriPath": {} },
+              "TextTransformations": [{ "Priority": 0, "Type": "NONE" }],
+              "PositionalConstraint": "STARTS_WITH"
+            }
+          }
+        }
+      }
+    },
+    {
+      "Name": "GeneralRateLimit",
+      "Priority": 5,
+      "Action": { "Block": {} },
+      "VisibilityConfig": {
+        "SampledRequestsEnabled": true,
+        "CloudWatchMetricsEnabled": true,
+        "MetricName": "GeneralRateLimit"
+      },
+      "Statement": {
+        "RateBasedStatement": {
+          "Limit": 2000,
+          "AggregateKeyType": "IP"
+        }
+      }
+    }
+  ]
+}
