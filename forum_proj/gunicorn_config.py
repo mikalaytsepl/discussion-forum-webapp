@@ -22,7 +22,7 @@ limit_request_fields = 100
 # Limit the size of header fields
 limit_request_field_size = 8190
 
-# Workers silent for this long will be killed and restarted. #TODO On stage of architecture hardening
+# Workers silent for this long will be killed and restarted.
 # timeout = 60 
 
 # Keep-alive helps performance behind ALB.
